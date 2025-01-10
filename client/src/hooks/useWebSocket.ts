@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { usePrivy } from '@privy-io/react-auth';
+import { useUser } from '@/context/UserContext';
 
 export interface WebSocketStatus {
   connected: boolean;
@@ -13,6 +14,7 @@ export function useWebSocket(url: string) {
     connected: false,
     reconnectAttempt: 0
   });
+  const { loadLoader } = useUser();
   const socket = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 3; // Reduced to 3 for Replit environment
@@ -39,7 +41,7 @@ export function useWebSocket(url: string) {
   };
 
   useEffect(() => {
-    
+    console.log('useWebSocket',user);
     // const user = JSON.parse(localStorage.getItem('user') || '{}');
     const connect = async (userId:string) => {
       try {
@@ -52,6 +54,7 @@ export function useWebSocket(url: string) {
         const emailtosend = encodeURIComponent(userId); // URL-encode the email
         const urlWithParams = `${url}?id=${emailtosend}`;
         const ws = new WebSocket(urlWithParams);
+
         socket.current = ws;
 
         // Setup heartbeat ping
@@ -69,6 +72,8 @@ export function useWebSocket(url: string) {
             reconnectAttempt: 0,
             lastError: undefined 
           });
+          
+          
           reconnectAttempts.current = 0;
           setupHeartbeat();
           toast({
@@ -150,6 +155,7 @@ export function useWebSocket(url: string) {
       }
     };
     if(user?.id){
+      loadLoader();
       connect(user.id);
     }
     if (socket.current && !user){
